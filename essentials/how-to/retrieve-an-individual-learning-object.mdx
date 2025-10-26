@@ -1,0 +1,446 @@
+---
+title: LinkedIn Learning API - Retrieve an Individual Learning Object
+description: Learn how to retrieve an individual learning object. The LinkedIn Learning API provides two sets of endpoints - one for fetching a learning asset's details and another for a learning classification's details.
+ms.date: 04/12/2018
+ms.topic: article
+ms.prod: linkedin-api-docs
+---
+
+# Retrieve an Individual Learning Object
+
+## Overview
+Learn how to retrieve an individual learning object. The LinkedIn Learning API provides two sets of endpoints - one for fetching a learning asset's details and another for a learning classification's details.
+
+## Understanding the Endpoints
+You can use these endpoints to:
+
+> [!div class="checklist"]
+> * Retrieve an individual learning asset, given an URN.
+> * Retrieve an individual learning classification, given an URN.
+
+## learningAssets GET
+To retrieve an individual learning asset, given an URN, issue a GET request to the following endpoint:
+
+<br>
+<table>
+  <tr>
+  <td class="method">
+    <strong>GET</strong>
+  </td>
+  <td class="endpoint">
+    https://api.linkedin.com/v2/learningAssets/{URN}
+  </td>
+  </tr>
+</table>
+
+The URN types supported by this endpoint are "urn:li:lyndaCourse", "urn:li:lyndaChapter", and "urn:li:lyndaVideo".
+
+### Parameters
+Parameter | Description | Required
+--------- | ----------- | --------
+targetLocale.language |The locale language the API will use to try to localize the learning asset. The value of this parameter should be **de**, **en**, **es**, **fr**, or **ja**. These values correspond to the locales "de_DE", "en_US", "es_ES", "fr_FR", and "ja_JP". If the learning asset cannot be localized or if the target locale is not set, the API will use the source locale of the learning asset. | No
+targetLocale.country | The locale country the API will use to try to localize the learning asset. The value of this parameter should be **DE**, **US**, **ES**, **FR**, or **JP**. These values correspond to the locales "de_DE", "en_US", "es_ES", "fr_FR", and "ja_JP". If the learning asset cannot be localized or if the target locale is not set, the API will use the source locale of the learning asset. | No
+expandDepth | The number of levels in the learning asset hierarchy to include asset details. This parameter is optional; please see the [Specifying the level of asset details](#specifying-the-level-of-asset-details) section for an explanation with examples. | No (default = 1)
+includeRetired | Whether to include retired learning assets. The value of this parameter should be **true** or **false**. To retrieve active and retired learning assets, set this parameter to **true**. | No (default = false)
+
+### cURL Request
+
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:111779?targetLocale.language=en&targetLocale.country=US&expandDepth=1&includeRetired=false'
+```
+
+### Response
+```json
+{
+  "urn": "urn:li:lyndaCourse:111779",
+  "contents": [
+    {
+      "asset": {
+        "urn": "urn:li:lyndaChapter:(urn:li:lyndaCourse:111779,119368)",
+        "contents": [
+          {
+            "asset": {
+              "urn": "urn:li:lyndaVideo:(urn:li:lyndaCourse:111779,119369)",
+              "contents": [],
+              "type": "VIDEO",
+              "title": {
+                "locale": {
+                  "country": "US",
+                  "language": "en"
+                },
+                "value": "Welcome"
+              }
+            }
+          },
+    …
+  ],
+  …
+  "type": "COURSE",
+  "title": {
+    "locale": {
+      "country": "US",
+      "language": "en"
+    },
+    "value": "Audition: Mixing a Short Film"
+  }
+}
+```
+
+## learningClassifications GET
+To retrieve an individual learning classification, given an URN, issue a GET request to the following endpoint:
+
+<br>
+<table>
+  <tr>
+  <td class="method">
+    <strong>GET</strong>
+  </td>
+  <td class="endpoint">
+    https://api.linkedin.com/v2/learningClassifications/{URN}
+  </td>
+  </tr>
+</table>
+
+
+The URN types supported by this endpoint are "urn:li:lyndaCategory" and "urn:li:skill".
+
+### Parameters
+Parameter | Description | Required
+--------- | ----------- | ---------
+targetLocale.language | The locale language the API will use to try to localize the learning classification. The value of this parameter should be **de**, **en**, **es**, **fr**, or **ja**. These values correspond to the locales "de_DE", "en_US", "es_ES", "fr_FR", and "ja_JP". If the learning classification cannot be localized or if the target locale is not set, the API will use the source locale of the learning classification. | No
+targetLocale.country | The locale country the API will use to try to localize the learning classification. The value of this parameter should be **DE**, **US**, **ES**, **FR**, or **JP**. These values correspond to the locales "de_DE", "en_US", "es_ES", "fr_FR", and "ja_JP". If the learning classification cannot be localized or if the target locale is not set, the API will use the source locale of the learning classification. | No
+
+### cURL request
+
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningClassifications/urn:li:lyndaCategory:7220?targetLocale.language=en&targetLocale.country=US'
+```
+
+### Response
+```json
+{
+  "urn": "urn:li:lyndaCategory:7220",
+  "owner": {
+    "urn": "urn:li:company:1337",
+    "name": {
+      "locale": {
+        "country": "US",
+        "language": "en"
+      },
+      "value": "LinkedIn"
+    }
+  },
+  "name": {
+    "locale": {
+      "country": "US",
+      "language": "en"
+    },
+    "value": "Audio Post-Production"
+  },
+  "type": "TOPIC"
+}
+```
+
+## API Advanced Concepts
+This section explains several advanced topics about the LinkedIn Learning Content API.
+
+### Specifying the level of asset details
+When you call the endpoints under /v2/learningAssets to retrieve a page of learning assets or an individual learning asset, you can optionally set an `expandDepth` parameter. This parameter (defaults to 1) tells the API how many levels in the learning asset hierarchy should include asset details. A detailed learning asset has the following structure:
+
+```json
+{
+  "urn": …,
+  "type": …,
+  "title": …,
+  "details": {
+    …
+  },
+  "contents": [
+    …
+  ]
+}
+```
+
+The `urn`, `type`, and `title` fields are the basic metadata about the learning asset.
+
+The `details` field is an object that includes detailed metadata about the learning asset - for example, its associated learning classifications, description, change timestamps, etc. (see the "Asset schema" section for the full schema reference).
+
+The `contents` field is an array of sub-assets of the learning asset, each sub-asset of which is a learning asset itself. For example, a course contains chapters, and a chapter contains videos. The learning asset representing the course would look like the following (focusing on the nested structure and omitting other fields):
+
+```json
+{
+  "type": "COURSE",
+  "contents": [
+    {
+      "asset": {
+        "type": "CHAPTER",
+        "contents": [
+          {
+            "asset": {
+              "type": "VIDEO",
+              "contents": [],
+              …
+            }
+          },
+        ]
+      }
+    },
+    …
+  ]
+}
+```
+
+In this learning asset hierarchy, you can think of the course as the first level of learning assets. The chapters, which are sub-assets of the course, are the second level of learning assets. The videos, which are sub-assets of the chapters, are the third level of learning assets.
+
+With this explanation of the learning asset hierarchy and the earlier explanation of asset details in mind, we can refer to the request below:
+
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:111779?targetLocale.language=en&targetLocale.country=US&expandDepth=1&includeRetired=false'
+```
+
+Setting the `expandDepth` parameter to **1** tells the API to include asset details only for the first level of learning assets - in this example, only for the course. The response would look like the following:
+
+```json
+{
+  "urn": …,
+  "type": COURSE,
+  "title": …,
+  "details": {
+    …
+  },
+  "contents": [
+    {
+      "asset": {
+        "urn": …,
+        "type": "CHAPTER",
+        "title": …,
+        "contents": [
+          {
+            "asset": {
+              "urn": …,
+              "type": "VIDEO",
+              "title": …,
+              "contents": []
+            }
+          },
+  …
+}
+```
+
+If you wish to include asset details for both the course and its chapters, you can tell the API to expand learning assets down to the second level:
+
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:111779?targetLocale.language=en&targetLocale.country=US&expandDepth=2&includeRetired=false'
+```
+
+With the `expandDepth` parameter set to **2**, the response would look like the following:
+
+```json
+{
+  "urn": …,
+  "type": COURSE,
+  "title": …,
+  "details": {
+    …
+  },
+  "contents": [
+    {
+      "asset": {
+        "urn": …,
+        "type": "CHAPTER",
+        "title": …,
+        "details": {
+          …
+        },
+        "contents": [
+          {
+            "asset": {
+              "urn": …,
+              "type": "VIDEO",
+              "title": …,
+              "contents": []
+            }
+          },
+  …
+}
+```
+Similarly, by setting the `expandDepth` parameter to **3** when calling the API, you can include asset details for all three levels - course, chapters, and videos - in this example learning asset.
+
+When expanding learning assets down to deeper levels, take care that the larger responses do not exceed the 2 MB response size limit of the API framework. The `expandDepth` parameter is a convenience so that you can retrieve more information with fewer calls. But you can always retrieve the same nested information in multiple steps. For example, leaving the `expandDepth` parameter at its default value of 1, you can retrieve a page of learning assets representing courses, which will include asset details only for each course. Then for each chapter URN and video URN under the courses, you can call the endpoint that retrieves an individual learning asset, which will include asset details for the chapter or video.
+
+Note that you can also set the `expandDepth` parameter to 0 when calling the API. This tells the API to omit all asset details:
+
+Sample request (using cURL):
+
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:111779?targetLocale.language=en&targetLocale.country=US&expandDepth=0&includeRetired=false'
+```
+
+With the `expandDepth` parameter set to **0**, the response would look like the following (no asset details at any level):
+
+```json
+{
+  "urn": …,
+  "type": COURSE,
+  "title": …,
+  "contents": [
+    {
+      "asset": {
+        "urn": …,
+        "type": "CHAPTER",
+        "title": …,
+        "contents": [
+          {
+            "asset": {
+              "urn": …,
+              "type": "VIDEO",
+              "title": …,
+              "contents": []
+            }
+          },
+  …
+}
+```
+
+### Rolling up sub-asset classifications
+A learning asset may be tagged with one or more learning classifications. For example, a course or video may be tagged with category and skill metadata. These learning classifications are included in the asset details (see the [Specifying the level of asset details](#specifying-the-level-of-asset-details) section).
+
+When retrieving a learning asset with sub-assets, all the learning classifications that the sub-assets are tagged with are rolled up into the asset details for the top-level learning asset. For example, when retrieving a learning asset representing a course, the asset details for the course include the learning classifications that the chapters and videos are tagged with. In this case, if you set the `expandDepth` parameter to include the asset details for the chapter and video sub-assets as well, the asset details for each sub-asset will not include its individual learning classifications.
+
+The API rolls up sub-asset classifications for two reasons. First, it makes sense for a learning asset to inherit all the learning classifications of its sub-assets. Second, rolling up sub-asset classifications lets the API de-duplicate them, reducing the response size if multiple sub-assets are tagged with the same learning classification.
+
+### Retrieving retired assets
+To retrieve learning assets that are retired, you will need to set the `includeRetired` parameter to **true** when calling the endpoints under /v2/learningAssets. Additionally, you will need to set the `expandDepth` parameter (see the [Specifying the level of asset details](#specifying-the-level-of-asset-details) section) so that, in the learning asset hierarchy, the retired learning assets will include asset details:
+
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:80436?targetLocale.language=en&targetLocale.country=US&expandDepth=1&includeRetired=true'
+```
+
+```json
+{
+  "urn": "urn:li:lyndaCourse:80434",
+  "contents": [],
+  "details": {
+    …,
+    "availability": "RETIRED",
+    …
+  },
+  "type": "COURSE",
+  "title": {
+    "locale": {
+      "country": "US",
+      "language": "en"
+    },
+    "value": "CSS Fundamentals (2011)"
+  }
+}
+```
+If, however, you set the `expandDepth` parameter so that, in the learning asset hierarchy, the retired learning assets will not include asset details, the API will not retrieve the retired learning assets, even if the `includeRetired` parameter is set to **true**. In this case:
+  - When retrieving an individual learning asset that is retired, the API will return a `404 Not Found` status.
+  - When retrieving a page of learning assets, the API will behave as if the `includeRetired` parameter were set to "false" and omit retired learning assets.
+  - When retrieving sub-assets of an active learning asset, the API will omit the sub-assets that are retired.
+
+To retrieve retired learning assets, the API requires the learning assets to include asset details to remove ambiguity, since the status - retired or active - of a learning asset is part of its asset details.
+
+
+### Specifying the response fields
+When calling any of the API endpoints, you can include a special request parameter that specifies the fields that will be in the response. Note that if the response fields you wish to specify are part of the asset details (see the [Specifying the level of asset details](#specifying-the-level-of-asset-details) section), you will also need to set the `expandDepth` parameter so that the required level of asset details will be included.
+
+[!include[field_projection_reference_table](../shared/field_projection_reference_table.md)]
+
+[!include[field_projection_refield_projection_syntax](../shared/field_projection_syntax.md)]
+
+Here are four sample requests showing an example of each kind of field projection:
+
+#### cURL Request
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:111779?targetLocale.language=en&targetLocale.country=US&expandDepth=1&includeRetired=false&fields=title'
+```
+
+#### Response
+```json
+{
+  "title": {
+    "locale": {
+      "country": "US",
+      "language": "en"
+    },
+    "value": "Audition: Mixing a Short Film"
+  }
+}
+```
+
+#### cURL Request
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:111779?targetLocale.language=en&targetLocale.country=US&expandDepth=1&includeRetired=false&fields=title:(value)'
+```
+
+#### Response
+```json
+{
+  "title": {
+    "value": "Audition: Mixing a Short Film"
+  }
+}
+```
+
+#### cURL Request
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:111779?targetLocale.language=en&targetLocale.country=US&expandDepth=1&includeRetired=false&fields=contents:($*:(asset:(urn)))'
+```
+
+#### Response
+```json
+{
+  "contents": [
+    {
+      "asset": {
+        "urn": "urn:li:lyndaChapter:(urn:li:lyndaCourse:111779,119368)"
+      }
+    },
+    {
+      "asset": {
+        "urn": "urn:li:lyndaChapter:(urn:li:lyndaCourse:111779,119372)"
+      }
+    },
+    …
+  ]
+}
+```
+#### cURL Request
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets/urn:li:lyndaCourse:111779?targetLocale.language=en&targetLocale.country=US&expandDepth=1&includeRetired=false&fields=urn,type,contents:($*:(asset:(urn,type)))'
+```
+
+#### Response
+```json
+{
+  "urn": "urn:li:lyndaCourse:111779",
+  "contents": [
+    {
+      "asset": {
+        "urn": "urn:li:lyndaChapter:(urn:li:lyndaCourse:111779,119368)",
+        "type": "CHAPTER"
+      }
+    },
+    {
+      "asset": {
+        "urn": "urn:li:lyndaChapter:(urn:li:lyndaCourse:111779,119372)",
+        "type": "CHAPTER"
+      }
+    },
+    …
+  ],
+  "type": "COURSE"
+}
+```

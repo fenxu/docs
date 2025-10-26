@@ -1,0 +1,213 @@
+---
+title: LinkedIn Learning API - Retrieve Learning Objects Based on Locale & Asset Type
+description: Learn how to integrate catalog metadata into your application. The LinkedIn Learning localeAndType Finder API provides two sets of endpoints - one for learning assets and one for learning classifications.
+ms.date: 12/20/2017
+ms.topic: article
+ms.prod: linkedin-api-docs
+---
+
+# Locale and Type Finder API
+
+## Overview
+The LinkedIn Learning "localeAndType" Finder API can be used to return the entire catalog of LinkedIn Learning courses and videos, grouped by language. The LinkedIn Learning API is designed to represent LinkedIn Learning content in a unified and extensible format. In researching standards and implementations of learning content metadata, we adopted patterns that will allow the API to evolve and expand using the same fundamental data model. This means as you integrate with the API presented in this document, your integration can more easily take advantage of new types of LinkedIn Learning content and content information as we add them to the API.
+
+## Understanding the Endpoints
+
+The LinkedIn Learning API provides two sets of endpoints - one for learning assets, and one for learning classifications. You can use these endpoints to:
+
+> [!div class="checklist"]
+> * Retrieve a page of learning assets, given locale and type criteria.
+> * Retrieve a page of learning classifications, given locale and type criteria.
+
+First, a note about pagination, using learning assets as an example (the same applies for learning classifications). When you call the endpoint that retrieves a page of learning assets, you will get a response like the following:
+
+```json
+{
+  "elements": [
+    …
+  ],
+  "paging": {
+    "total": 5810,
+    "count": 20,
+    "start": 1000,
+    "links": [
+      {
+        "rel": "prev",
+        "href": 
+"/v2/learningAssets?assetType=COURSE&count=20&expandDepth=1&includeRetired=false&q=localeAndType&sourceLocale.country=US&sourceLocale.language=en&start=980",
+        "type": "application/json"
+      },
+      {
+        "rel": "next",
+        "href": 
+"/v2/learningAssets?assetType=COURSE&count=20&expandDepth=1&includeRetired=false&q=localeAndType&sourceLocale.country=US&sourceLocale.language=en&start=1020",
+        "type": "application/json"
+      }
+    ]
+  }
+}
+```
+
+The value of the "elements" field is an array of learning assets for the requested page. 
+
+The value of the "paging" field is an object with paging metadata. In particular, if you wish to iterate through the catalog of learning assets, you can use the "links" field in the paging metadata to help construct a request for the next page. The "links" field simplifies requests for additional pages because you will not need to track the page start and count yourself.
+
+[!include[pagination_reference_table](../shared/pagination_reference_table.md)]
+
+Each localeAndType Finder endpoint and its parameters are documented below. Note that all parameter names and values are case-sensitive.
+
+## learningAssets localeAndType Finder
+To retrieve a page of learning assets, given some criteria, issue a GET call to the following endpoint:
+
+> [!TIP]
+> The content library is licensed by language. One LinkedIn Learning tenant may have access to English assets while another may have access to French and German assets. The "localeAndType" finder does not filter results based on licensing. If your use case requires bulk importing LinkedIn Learning assets licensed to a tenant, use the "criteria" finder. Review [Retrieve learning assets based on requester's licensed access](criteria-api#querying-an-accounts-licensed-assets) for additional information.
+
+<br>
+<table>
+  <tbody>
+    <tr>
+    <td class="method">
+      <strong>GET</strong>
+    </td>
+    <td class="endpoint">
+      https://api.linkedin.com/v2/learningAssets?q=localeAndType
+    </td>
+    </tr>
+  </tbody>
+</table>
+
+
+### Parameters
+Parameter | Description | Required
+--------- | ----------- | --------
+q | The value of this parameter should always be: **localeAndType**. | Yes
+assetType | The type of the learning assets. The value of this parameter should be **COURSE** or **VIDEO**. |Yes
+sourceLocale.language | The locale language of the learning assets. The value of this parameter should be **de**, **en**, **es**, **fr**, or **ja**. These values correspond to the locales "de_DE", "en_US", "es_ES", "fr_FR", and "ja_JP". | Yes
+sourceLocale.country | The locale country of the learning assets. The value of this parameter should be **DE**, **US**, **ES**, **FR**, or **JP**. These values correspond to the locales "de_DE", "en_US", "es_ES", "fr_FR", and "ja_JP". |Yes
+expandDepth | The number of levels in the learning asset hierarchy to include asset details. This parameter is optional; please see the [Specifying the level of asset details](#specifying-the-level-of-asset-details) section for an explanation with examples. | No (default = 1)
+includeRetired | Whether to include retired learning assets. The value of this parameter should be **true** or **false**. To retrieve active and retired learning assets, set this parameter to **true**. | No (default = false)
+start |The start index of learning assets for the page. | No (default = 0)
+count | The number of learning assets to include in the page. Please choose a reasonable value if overriding the default; the API will return an error if the requested page exceeds the 2 MB response size limit of the framework. | No (default = 20)
+
+### cURL Request
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningAssets?q=localeAndType&assetType=COURSE&sourceLocale.language=en&sourceLocale.country=US&expandDepth=1&includeRetired=false&start=1000&count=20'
+```
+
+### Response
+```json
+{
+  "elements": [
+    {
+      "urn": "urn:li:lyndaCourse:110715",
+      "contents": [
+        {
+          "asset": {
+            "urn": "urn:li:lyndaChapter:(urn:li:lyndaCourse:110715,114477)",
+            "contents": [
+              {
+                "asset": {
+                  "urn": "urn:li:lyndaVideo:(urn:li:lyndaCourse:110715,114478)",
+                  "contents": [],
+                  "type": "VIDEO",
+                  "title": {
+                    "locale": {
+                      "country": "US",
+                      "language": "en"
+                    },
+                    "value": "Welcome"
+                  }
+                }
+              },
+    …
+  ],
+  "paging": {
+    "total": 5810,
+    "count": 20,
+    "start": 1000,
+    "links": [
+      {
+        "rel": "prev",
+        "href": 
+"/v2/learningAssets?assetType=COURSE&count=20&expandDepth=1&includeRetired=false&q=localeAndType&sourceLocale.country=US&sourceLocale.language=en&start=980",
+        "type": "application/json"
+      },
+      {
+        "rel": "next",
+        "href": 
+"/v2/learningAssets?assetType=COURSE&count=20&expandDepth=1&includeRetired=false&q=localeAndType&sourceLocale.country=US&sourceLocale.language=en&start=1020",
+        "type": "application/json"
+      }
+    ]
+  }
+}
+```
+
+## learningClassifications localeAndType Finder
+To retrieve a page of learning classifications, given some criteria, issue a GET call to the following endpoint:
+
+<br>
+<table>
+  <tr>
+  <td class="method">
+    <strong>GET</strong>
+  </td>
+  <td class="endpoint">
+    https://api.linkedin.com/v2/learningClassifications?q=localeAndType
+  </td>
+  </tr>
+</table>
+
+### Parameters
+Parameter | Description | Required
+--------- | ----------- | --------
+q | The value of this parameter should always be: **localeAndType**. | Yes
+type | The type of the learning classifications. The value of this parameter should be **LIBRARY**, **SUBJECT**, or **TOPIC**. <br><br>Libraries, subjects, and topics are taxonomy categories associated with learning assets. *Libraries* - for example, "Technology" - are broad groups of learning assets. *Subjects* - for example, "Software Development" - are children of libraries and are groups of related topics. *Topics* - for example, "Version Control" - are children of subjects and are focused topics. | Yes
+sourceLocale.language | The locale language of the learning classifications. The value of this parameter should be  **de**, **en**, **es**, **fr**, or **ja**. These values correspond to the locales "de_DE", "en_US", "es_ES", "fr_FR", and "ja_JP".| Yes
+sourceLocale.country | The locale country of the learning classifications. The value of this parameter should be **DE**, **US**, **ES**, **FR**, or **JP**. These values correspond to the locales "de_DE", "en_US", "es_ES", "fr_FR", and "ja_JP". | Yes
+start |The start index of learning classifications for the page. | No (default = 0)
+count | The number of learning classifications to include in the page. Please choose a reasonable value if overriding the default; the API will return an error if the requested page exceeds the 2 MB response size limit of the framework. | No (default = 100)
+
+### cURL Request
+
+```bash
+curl -H 'Authorization: Bearer AQXt…' \
+'https://api.linkedin.com/v2/learningClassifications?q=localeAndType&type=LIBRARY&sourceLocale.language=en&sourceLocale.country=US&start=0&count=100'
+```
+
+### Response
+```json
+{
+  "elements": [
+    {
+      "urn": "urn:li:lyndaCategory:7163",
+      "owner": {
+        "urn": "urn:li:company:1337",
+        "name": {
+          "locale": {
+            "country": "US",
+            "language": "en"
+          },
+          "value": "LinkedIn"
+        }
+      },
+      "name": {
+        "locale": {
+          "country": "US",
+          "language": "en"
+        },
+        "value": "Creative"
+      },
+      "type": "LIBRARY"
+    },
+    …
+  ],
+  "paging": {
+    "total": 3,
+    "count": 100,
+    "start": 0,
+    "links": []
+  }
+}
+```

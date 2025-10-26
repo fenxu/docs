@@ -1,0 +1,216 @@
+---
+title: LinkedIn Learning API - Retrieve Learning Objects Based on Criteria
+---
+# Criteria Finder API
+## Overview
+The LinkedIn Learning criteria Finder API is a set of endpoints you can call to filter and search the catalog of LinkedIn Learning content. The main endpoint takes a request with filtering and relevance criteria criteria for LinkedIn Learning content and returns the content metadata in JSON format. Since this API uses the same filtering and search functionality as the LinkedIn Learning application, you can call the API to find the same results as you would find in LinkedIn Learning.
+
+The LinkedIn Learning criteria Finder complements the LinkedIn Learning localeAndType Finder. The localeAndType API allows you to bulk import the entire catalog of LinkedIn Learning content, the criteria API allows you to discover a subset of LinkedIn Learning content based on filter parameters, sorted by relevance, popularity, or recency. As part of this use case, the criteria API also supports searching category and skill metadata. 
+
+The LinkedIn Learning criteria API and localeAndType API share the same key concepts, terminology, and data models. The criteria API builds on the localeAndType API to allow you to query the LinkedIn Learning content library and control how the results appear.
+
+One important difference between the LinkedIn Learning criteria API and localeAndType API is how the APIs treat retired content. In the localeAndType API, you can specify a parameter to retrieve retired as well as active content. In the criteria API, you can retrieve only active content. This document explains how you can access and use the LinkedIn Learning criteria API.
+
+## Understanding the Endpoints
+The LinkedIn Learning criteria API provides two endpoints - one for learning assets, and one for learning classifications. You can call these endpoints to:
+
+> [!div class="checklist"]
+> * Retrieve a page of learning assets, given some search and relevance criteria.
+> * Retrieve a list of learning assets updated since a given date.
+> * Retrieve a page of learning classifications, given a keyword.
+
+Each API endpoint and its parameters are documented in the "API endpoints" section. First, a note about pagination, using learning assets as an example (the same applies for learning classifications).
+
+When you call the endpoint that retrieves a page of learning assets, given some search and relevance criteria, you will get a response like the following:
+
+```json
+ {
+  "elements": [
+    ...
+  ],
+  "metadata": {
+    ...
+  },
+  "paging": {
+    "total": 2179,
+    "count": 20,
+    "start": 100,
+    "links": [
+      {
+        "rel": "prev",
+        "href": 
+"/v2/learningAssets?assetFilteringCriteria.keyword=java&count=20&q=criteria&start=80",
+        "type": "application/json"
+      },
+      {
+        "rel": "next",
+        "href": 
+"/v2/learningAssets?assetFilteringCriteria.keyword=java&count=20&q=criteria&start=220",
+        "type": "application/json"
+      }
+    ]
+  }
+}
+```
+
+The value of the `elements` field is an array of learning assets for the requested page. The value of the `metadata` field, if present, is an object with metadata about the search results.
+
+The value of the `paging` field is an object with paging metadata. In particular, if you wish to retrieve the next page of search results, you can use the "links" field in the paging metadata to help construct a request for the next page. The `links` field simplifies requests for additional pages because you will not need to track the page start and count yourself.
+
+[!include[pagination_reference_table](../shared/pagination_reference_table.md)]
+
+Each LinkedIn Learning learningAssets criteria finder and learningClassifications keyword finders and supported parameters are documented below. Note that all parameter names and values (unless noted) are case-sensitive.
+
+## learningAssets Criteria Finder
+This finder can be used to retrieve a page of learning assets, given some set of criteria. Using this endpoint you can:
+
+- Search for learning assets given some search and relevance criteria.
+- Retrieve a list of learning assets released, retired or modified since a given date.
+- Retrieve a list of learning assets the requester is licensed to access.
+
+<br/>
+<table>
+  <tr>
+  <td class="method">
+    <strong>GET</strong>
+  </td>
+  <td class="endpoint">
+    https://api.linkedin.com/v2/learningAssets?q=criteria
+  </td>
+  </tr>
+</table>
+
+The parameters of this endpoint are grouped into three logical sets of criteria:
+
+- `assetFilteringCriteria`: criteria that narrows the content you wish to retrieve from the LinkedIn Learning catalog.
+- `assetPresentationCriteria`: criteria that controls how the search results appear.
+- `assetRetrievalCriteria`: criteria that controls how much information is retrieved for the search results.
+
+## API Use Cases
+### Retrieve learning assets based on modification date
+You can use the criteria finder to retrieve a list of learning assets modified after a given date. To determine the type of modification made, compare created and retired dates to the lastModifiedAfter parameter. 
+
+- **Newly Released**: `publishedAt` date is greater than the `assetFilteringCriteria.lastModifiedAfter` parameter value.
+- **Modified**: `publishedAt` date is less than the `assetFilteringCriteria.lastModifiedAfter` parameter value.
+- **Retired**: `retiredAt` date is present and greater than `assetFilteringCriteria.lastModifiedAfter` parameter value
+
+In the example below, the result set contains learning assets modified after January 4th, 2018. A field projection is used to limit the response body to asset titles, URNs and key dates.
+
+#### cURL Request
+Note: Use the `-g` curl option to turn off globbing since the URL includes brackets.
+
+```bash
+curl -X GET -H 'Authorization: Bearer AQXX6Z....' -g \
+  'https://api.linkedin.com/v2/learningAssets?assetFilteringCriteria.assetTypes[0]=COURSE&assetFilteringCriteria.lastModifiedAfter=1515097718000&assetRetrievalCriteria.expandDepth=1&assetRetrievalCriteria.includeRetired=true&count=1&q=criteria&start=20&fields=title:(value),details:(lastUpdatedAt,publishedAt,retiredAt,availability),urn'
+```
+
+#### Response
+```json
+{
+    "metadata": {
+        "assetTypeFacetMetadata": [
+            {
+                "count": 83,
+                "assetType": "VIDEO"
+            },
+            {
+                "count": 40,
+                "assetType": "COURSE"
+            },
+            {
+                "count": 0,
+                "assetType": "LEARNING_PATH"
+            }
+        ],
+        "difficultyLevelFacetMetadata": [
+            {
+                "difficultyLevel": "INTERMEDIATE",
+                "count": 10
+            },
+            {
+                "difficultyLevel": "BEGINNER",
+                "count": 8
+            },
+            {
+                "difficultyLevel": "ADVANCED",
+                "count": 4
+            }
+        ]
+    },
+    "elements": [
+        {
+            "urn": "urn:li:lyndaCourse:578072",
+            "details": {
+                "publishedAt": 1499644800000,
+                "lastUpdatedAt": 1515184875057,
+                "availability": "AVAILABLE"
+            },
+            "title": {
+                "value": "The Essential Elements of Predictive Analytics and Data Mining"
+            }
+        }
+    ],
+    "paging": {
+        "total": 40,
+        "count": 1,
+        "start": 20,
+        "links": [
+            {
+                "rel": "prev",
+                "href": "/v2/learningAssets?assetFilteringCriteria.assetTypes[0]=COURSE&assetFilteringCriteria.lastModifiedAfter=1515097718000&assetRetrievalCriteria.expandDepth=1&assetRetrievalCriteria.includeRetired=true&count=1&q=criteria&start=19",
+                "type": "application/json"
+            },
+            {
+                "rel": "next",
+                "href": "/v2/learningAssets?assetFilteringCriteria.assetTypes[0]=COURSE&assetFilteringCriteria.lastModifiedAfter=1515097718000&assetRetrievalCriteria.expandDepth=1&assetRetrievalCriteria.includeRetired=true&count=1&q=criteria&start=21",
+                "type": "application/json"
+            }
+        ]
+    }
+}
+```
+
+### Querying an account's licensed assets
+When `assetFilteringCriteria.licensedOnly` is set to **true**, only assets licensed to the caller will be returned in the result set based on context carried in the OAuth 2.0 bearer token. LinkedIn Learning content is licensed by locale and API keys are associated with a given LinkedIn Learning tenant. Since tenants are licensed to access any permutation of our English, French, German, Spanish and Japanese content libraries, OAuth 2.0 bearer tokens are used to infer assets licensed to a given account.
+
+In the request below, the result set changes based on OAuth token used to authenticate the request. For example, if a tenant is licensed to access English content and you make a request with an OAuth 2.0 token generated from the tenant's API keys, the result set will only include English assets. If another tenant is licensed to access French and German content and you makes the same API request with an OAuth token generated from API keys associated with the French & German tenant you can page through the result set to access assets details from the French & German content libraries. 
+
+#### cURL Request
+Note: Use the `-g` curl option to turn off globbing since the URL includes brackets.
+
+```bash
+curl -X GET 'https://api.linkedin.com/v2/learningAssets?q=criteria&assetFilteringCriteria.assetTypes[0]=COURSE&assetFilteringCriteria.licensedOnly=true&fields=urn,title:%28value%29,details:%28availableLocales%29&count=1' -H 'Authorization: Bearer AQXX..' 
+```
+
+> [!TIP]
+> In most cases, you will want to set `assetFilteringCriteria.licensedOnly` to **true**  to ensure only licensed assets are included in the result set. In the event `assetFilteringCriteria.locales` AND `assetFilteringCriteria.licensedOnly` are both included in a request, only learning assets that meet both criteria will be included in the response.
+
+### Bulk importing a tenant's licensed assets
+To replicate the LinkedIn Learning content catalog in an external system we recommend importing content in two phases:
+
+  **1. Initial bulk asset import:** To import all active assets licensed to a tenant, use the criteria finder API with `licensedOnly` parameter. The result set may exclude assets released in the last 48 hours.
+
+> [!CAUTION]
+> Combining "empty" queries with the `sortBy` parameter can cause slow or degraded queries. Empty criteria queries are requests where there are no keyword, difficulty, skill, classification, or lastModifiedAfter filters. For the best bulk import performance, omit `sortBy`.
+
+```bash
+curl -X GET 'https://api.linkedin.com/v2/learningAssets?q=criteria&assetFilteringCriteria.assetTypes[0]=COURSE&assetFilteringCriteria.licensedOnly=true&assetRetrievalCriteria.includeRetired=false&count=75' -H 'Authorization: Bearer AQXX..' 
+```
+
+  **2. Recently released asset import:** Since the initial bulk import may exclude recently released assets, you can import the remaining assets by backdating `assetFilteringCriteria.lastModifiedAfter` 48 hours before the initial bulk asset import began.
+
+```bash
+curl -X GET -H 'Authorization: Bearer AQXX6Z....' -g 'https://api.linkedin.com/v2/learningAssets?assetFilteringCriteria.assetTypes[0]=COURSE&assetFilteringCriteria.lastModifiedAfter=1515097718000&assetRetrievalCriteria.expandDepth=1&assetRetrievalCriteria.includeRetired=true&count=1&q=criteria&start=20&fields=title:(value),details:(lastUpdatedAt,publishedAt,retiredAt,availability),urn'
+```
+
+### Search for learning assets based on relevance criteria
+In the example below, the result set contains learningAssets that meet the search and relevance criteria provided. A field projection is used to limit the response body to include asset titles, urns and levels.
+
+#### cURL Request
+Note: Use the `-g` curl option to turn off globbing since the URL includes brackets.
+
+```bash
+curl -H 'Authorization: Bearer AQXt…' -g \
+'https://api.linkedin.com/v2/learningAssets?q=criteria&assetFilteringCriteria.assetTypes[0]=COURSE&assetFilteringCriteria.classifications[0]=urn:li:lyndaCategory:7164&assetFilteringCriteria.difficultyLevels[0]=BEGINNER&assetFilteringCriteria.difficultyLevels[1]=INTERMEDIATE&assetFilteringCriteria.difficultyLevels[2]=ADVANCED&assetFilteringCriteria.keyword=java&assetPresentationCriteria.sortBy=RELEVANCE&count=10&fields=urn,title:(value),details:(level)'
+```
+
